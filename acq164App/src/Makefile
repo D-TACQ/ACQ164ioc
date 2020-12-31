@@ -59,6 +59,8 @@ acq164_SRCS_vxWorks += -nil-
 
 # Link in the code from our support library
 acq164_LIBS += acq164Support
+acq164_LIBS += stream
+acq164_LIBS += asyn
 
 # To build SNL programs, SNCSEQ must be defined
 # in the <top>/configure/RELEASE file
