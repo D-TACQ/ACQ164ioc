@@ -1,0 +1,1 @@
+device(lsi,INST_IO,devacq164Version,"acq164 version")
