@@ -1,7 +1,17 @@
 # EPICS base and support
 
+Sample top level build for an EPICS base + asyn, StreamDevice project
+
+``NB: hard coded path: /home/pgm/PROJECTS .. search everything and replace with your own.. 
+
+Do this BEFORE any build..
+
+```bash
+find . -type f -print | xargs grep /home/pgm/PROJECTS
+```
 https://docs.epics-controls.org/projects/how-tos/en/latest/getting-started/installation.html
 
+```bash
 git clone --recursive https://github.com/epics-base/epics-base.git
 cd epics-base
 make
@@ -27,8 +37,11 @@ ln -s EPICS-pcre/8-32 pcre
 cd ..
 source ./setup.env 
 (cd support/pcre/; make)
- 
- Good Job Freddie!
+```
+
+ Good Job Freddie! Thanks!
+
+
 
 
 
