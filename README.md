@@ -9,6 +9,8 @@ Do this BEFORE any build..
 ```bash
 find . -type f -print | xargs grep /home/pgm/PROJECTS
 ```
+
+## Following this install guide .. 
 https://docs.epics-controls.org/projects/how-tos/en/latest/getting-started/installation.html
 
 ```bash
