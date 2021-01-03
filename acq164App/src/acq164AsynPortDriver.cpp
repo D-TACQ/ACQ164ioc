@@ -27,7 +27,7 @@
 #include <epicsEvent.h>
 #include <iocsh.h>
 
-#include "testAsynPortDriver.h"
+#include "acq164AsynPortDriver.h"
 #include <epicsExport.h>
 
 #define FREQUENCY 1000       /* Frequency in Hz */
@@ -38,7 +38,7 @@
 #define MAX_ENUM_STRING_SIZE 20
 static int allVoltsPerDivSelections[NUM_VERT_SELECTIONS]={1,2,5,10};
 
-static const char *driverName="testAsynPortDriver";
+static const char *driverName="acq164AsynPortDriver";
 void simTask(void *drvPvt);
 
 
@@ -46,7 +46,7 @@ void simTask(void *drvPvt);
   * Calls constructor for the asynPortDriver base class.
   * \param[in] portName The name of the asyn port driver to be created.
   * \param[in] maxPoints The maximum  number of points in the volt and time arrays */
-testAsynPortDriver::testAsynPortDriver(const char *portName, int maxPoints, int _nchan)
+acq164AsynPortDriver::acq164AsynPortDriver(const char *portName, int maxPoints, int _nchan)
    : asynPortDriver(portName,
                     _nchan, /* maxAddr */
                     asynInt32Mask | asynFloat64Mask | asynFloat64ArrayMask | asynEnumMask | asynDrvUserMask, /* Interface mask */
@@ -130,7 +130,7 @@ testAsynPortDriver::testAsynPortDriver(const char *portName, int maxPoints, int 
 
 void simTask(void *drvPvt)
 {
-    testAsynPortDriver *pPvt = (testAsynPortDriver *)drvPvt;
+    acq164AsynPortDriver *pPvt = (acq164AsynPortDriver *)drvPvt;
 
     pPvt->simTask();
 }
@@ -140,7 +140,7 @@ void simTask(void *drvPvt)
   * noise, and displays it on
   * a simulated scope.  It computes waveforms for the X (time) and Y (volt) axes, and computes
   * statistics about the waveform. */
-void testAsynPortDriver::simTask(void)
+void acq164AsynPortDriver::simTask(void)
 {
     /* This thread computes the waveform and does callbacks with it */
 
@@ -212,7 +212,7 @@ void testAsynPortDriver::simTask(void)
   * For all parameters it sets the value in the parameter library and calls any registered callbacks..
   * \param[in] pasynUser pasynUser structure that encodes the reason and address.
   * \param[in] value Value to write. */
-asynStatus testAsynPortDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
+asynStatus acq164AsynPortDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
     int function = pasynUser->reason;
     asynStatus status = asynSuccess;
@@ -262,7 +262,7 @@ asynStatus testAsynPortDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
   * For all  parameters it  sets the value in the parameter library and calls any registered callbacks.
   * \param[in] pasynUser pasynUser structure that encodes the reason and address.
   * \param[in] value Value to write. */
-asynStatus testAsynPortDriver::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
+asynStatus acq164AsynPortDriver::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
 {
     int function = pasynUser->reason;
     asynStatus status = asynSuccess;
@@ -314,7 +314,7 @@ asynStatus testAsynPortDriver::writeFloat64(asynUser *pasynUser, epicsFloat64 va
   * \param[in] value Pointer to the array to read.
   * \param[in] nElements Number of elements to read.
   * \param[out] nIn Number of elements actually read. */
-asynStatus testAsynPortDriver::readFloat64Array(asynUser *pasynUser, epicsFloat64 *value,
+asynStatus acq164AsynPortDriver::readFloat64Array(asynUser *pasynUser, epicsFloat64 *value,
                                          size_t nElements, size_t *nIn)
 {
     int function = pasynUser->reason;
@@ -347,7 +347,7 @@ asynStatus testAsynPortDriver::readFloat64Array(asynUser *pasynUser, epicsFloat6
     return status;
 }
 
-asynStatus testAsynPortDriver::readEnum(asynUser *pasynUser, char *strings[], int values[], int severities[], size_t nElements, size_t *nIn)
+asynStatus acq164AsynPortDriver::readEnum(asynUser *pasynUser, char *strings[], int values[], int severities[], size_t nElements, size_t *nIn)
 {
     int function = pasynUser->reason;
     size_t i;
@@ -368,7 +368,7 @@ asynStatus testAsynPortDriver::readEnum(asynUser *pasynUser, char *strings[], in
     return asynSuccess;
 }
 
-void testAsynPortDriver::setVertGain()
+void acq164AsynPortDriver::setVertGain()
 {
     epicsInt32 igain, i;
     double gain;
@@ -384,7 +384,7 @@ void testAsynPortDriver::setVertGain()
     doCallbacksEnum(voltsPerDivStrings_, voltsPerDivValues_, voltsPerDivSeverities_, NUM_VERT_SELECTIONS, P_VoltsPerDivSelect, 0);
 }
 
-void testAsynPortDriver::setVoltsPerDiv()
+void acq164AsynPortDriver::setVoltsPerDiv()
 {
     epicsInt32 mVPerDiv;
 
@@ -393,7 +393,7 @@ void testAsynPortDriver::setVoltsPerDiv()
     setDoubleParam(P_VoltsPerDiv, mVPerDiv / 1000.);
 }
 
-void testAsynPortDriver::setTimePerDiv()
+void acq164AsynPortDriver::setTimePerDiv()
 {
     epicsInt32 microSecPerDiv;
 
@@ -410,9 +410,9 @@ extern "C" {
 /** EPICS iocsh callable function to call constructor for the testAsynPortDriver class.
   * \param[in] portName The name of the asyn port driver to be created.
   * \param[in] maxPoints The maximum  number of points in the volt and time arrays */
-int testAsynPortDriverConfigure(const char *portName, int maxPoints, int nchan)
+int acq164AsynPortDriverConfigure(const char *portName, int maxPoints, int nchan)
 {
-    new testAsynPortDriver(portName, maxPoints, nchan);
+    new acq164AsynPortDriver(portName, maxPoints, nchan);
     return(asynSuccess);
 }
 
@@ -423,18 +423,18 @@ static const iocshArg initArg0 = { "portName",iocshArgString};
 static const iocshArg initArg1 = { "max points",iocshArgInt};
 static const iocshArg initArg2 = { "max chan",iocshArgInt};
 static const iocshArg * const initArgs[] = {&initArg0, &initArg1, &initArg2};
-static const iocshFuncDef initFuncDef = {"testAsynPortDriverConfigure",3,initArgs};
+static const iocshFuncDef initFuncDef = {"acq164AsynPortDriverConfigure",3,initArgs};
 static void initCallFunc(const iocshArgBuf *args)
 {
-    testAsynPortDriverConfigure(args[0].sval, args[1].ival, args[2].ival);
+	acq164AsynPortDriverConfigure(args[0].sval, args[1].ival, args[2].ival);
 }
 
-void testAsynPortDriverRegister(void)
+void acq164AsynPortDriverRegister(void)
 {
     iocshRegister(&initFuncDef,initCallFunc);
 }
 
-epicsExportRegistrar(testAsynPortDriverRegister);
+epicsExportRegistrar(acq164AsynPortDriverRegister);
 
 }
 

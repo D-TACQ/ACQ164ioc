@@ -43,9 +43,9 @@
   * statistics on the waveform, and does callbacks with the statistics and the waveform data itself.
   * I have made the methods of this class public in order to generate doxygen documentation for them,
   * but they should really all be private. */
-class testAsynPortDriver : public asynPortDriver {
+class acq164AsynPortDriver : public asynPortDriver {
 public:
-    testAsynPortDriver(const char *portName, int maxArraySize, int nchan);
+    acq164AsynPortDriver(const char *portName, int maxArraySize, int nchan);
 
     /* These are the methods that we override from asynPortDriver */
     virtual asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);

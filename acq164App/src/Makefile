@@ -27,7 +27,7 @@ acq164Support_SRCS += dbSubExample.c
 acq164Support_SRCS += devacq164Version.c
 acq164Support_SRCS += acq164Hello.c
 acq164Support_SRCS += initTrace.c
-acq164Support_SRCS += testAsynPortDriver.cpp
+acq164Support_SRCS += acq164AsynPortDriver.cpp
 
 acq164Support_LIBS += $(EPICS_BASE_IOC_LIBS)
 
@@ -50,7 +50,7 @@ acq164_DBD += dbSubExample.dbd
 acq164_DBD += devacq164Version.dbd
 acq164_DBD += acq164Hello.dbd
 acq164_DBD += initTrace.dbd
-acq164_DBD += testAsynPortDriver.dbd
+acq164_DBD += acq164AsynPortDriver.dbd
 
 # acq164_registerRecordDeviceDriver.cpp derives from acq164.dbd
 acq164_SRCS += acq164_registerRecordDeviceDriver.cpp
