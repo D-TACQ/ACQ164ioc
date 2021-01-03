@@ -2,7 +2,7 @@
 
 Sample top level build for an EPICS base + asyn, StreamDevice project
 
-``NB: hard coded path: /home/pgm/PROJECTS .. search everything and replace with your own.. 
+**NB: hard coded path**: /home/pgm/PROJECTS .. search everything and replace with your own.. 
 
 Do this BEFORE any build..
 
