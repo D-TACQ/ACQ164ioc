@@ -59,6 +59,8 @@ public:
 
     virtual void task() = 0;
 
+    static int factory(const char *portName, int maxPoints, int nchan);
+
 protected:
     /** Values used for pasynUser->reason, and indexes into the parameter library. */
     int P_Run;
@@ -98,5 +100,4 @@ protected:
     	getIntegerParam(P_MaxPoints,        &maxPoints);
     	return maxPoints;
     }
-
 };
