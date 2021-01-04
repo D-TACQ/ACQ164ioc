@@ -57,9 +57,7 @@ public:
     virtual asynStatus readEnum(asynUser *pasynUser, char *strings[], int values[], int severities[],
                                 size_t nElements, size_t *nIn);
 
-    /* These are the methods that are new to this class */
-    void acqTask(void);
-    void simTask(void);
+    virtual void task() = 0;
 
 protected:
     /** Values used for pasynUser->reason, and indexes into the parameter library. */
@@ -81,7 +79,6 @@ protected:
     int P_MaxValue;
     int P_MeanValue;
 
-private:
     /* Our data */
     epicsEventId eventId_;
     epicsFloat64 *pTimeBase_;
@@ -93,9 +90,6 @@ private:
     void setVoltsPerDiv();
     void setTimePerDiv();
 
-
-
-
     int nchan;
     epicsFloat64 *pData_;
 
@@ -105,6 +99,4 @@ private:
     	return maxPoints;
     }
 
-
-friend class RawFrameHandler;
 };

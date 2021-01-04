@@ -39,9 +39,13 @@
 static int allVoltsPerDivSelections[NUM_VERT_SELECTIONS]={1,2,5,10};
 
 static const char *driverName="acq164AsynPortDriver";
-void simTask(void *drvPvt);
-void acqTask(void *drvPvt);
 
+void task_runner(void *drvPvt)
+{
+    acq164AsynPortDriver *pPvt = (acq164AsynPortDriver *)drvPvt;
+
+    pPvt->task();
+}
 
 /** Constructor for the testAsynPortDriver class.
   * Calls constructor for the asynPortDriver base class.
@@ -114,15 +118,12 @@ acq164AsynPortDriver::acq164AsynPortDriver(const char *portName, int maxPoints, 
     setDoubleParam (P_MeanValue,         0.0);
 
 
-    int sim = 0;
-    if (getenv("SIM")){
-    	sim = atoi(getenv("SIM"));
-    }
+
     /* Create the thread that computes the waveforms in the background */
     status = (asynStatus)(epicsThreadCreate("testAsynPortDriverTask",
                           epicsThreadPriorityMedium,
                           epicsThreadGetStackSize(epicsThreadStackMedium),
-						  sim==0? (EPICSTHREADFUNC)::acqTask: (EPICSTHREADFUNC)::simTask,
+						  (EPICSTHREADFUNC)::task_runner,
                           this) == NULL);
     if (status) {
         printf("%s:%s: epicsThreadCreate failure\n", driverName, __FUNCTION__);
@@ -131,18 +132,7 @@ acq164AsynPortDriver::acq164AsynPortDriver(const char *portName, int maxPoints, 
 }
 
 
-void acqTask(void *drvPvt)
-{
-    acq164AsynPortDriver *pPvt = (acq164AsynPortDriver *)drvPvt;
 
-    pPvt->acqTask();
-}
-void simTask(void *drvPvt)
-{
-    acq164AsynPortDriver *pPvt = (acq164AsynPortDriver *)drvPvt;
-
-    pPvt->simTask();
-}
 
 //#include "local.h"
 #include "acq2xx_api.h"
@@ -153,36 +143,42 @@ void simTask(void *drvPvt)
 #include "DataStreamer.h"
 #include "DirfileFrameHandler.h"
 
-class RawFrameHandler: public FrameHandler {
+class Acq164Device: public acq164AsynPortDriver, FrameHandler {
+	int cursor;
 	virtual void onFrame(
 			Acq2xx& _card, const AcqType& _acqType,
 			const Frame* frame);
-	acq164AsynPortDriver* pd;
-	int cursor;
-	int maxPoints;
+
 public:
-	RawFrameHandler(acq164AsynPortDriver* _pd) :
-		pd(_pd), cursor(0)
-	{
-		maxPoints = pd->get_maxPoints();
-		fprintf(stderr, "%s setting maxPoints %d\n", __FUNCTION__, maxPoints);
-		fprintf(stderr, "%s sizeof(int) %d\n", __FUNCTION__, sizeof(int));
-	}
-	virtual ~RawFrameHandler() {}
+	Acq164Device(const char *portName, int maxArraySize, int nchan) :
+		acq164AsynPortDriver(portName, maxArraySize, nchan),
+		cursor(0)
+	{}
+	virtual void task();
+};
+
+class SimDevice: public acq164AsynPortDriver {
+	int cursor;
+
+
+public:
+	SimDevice(const char *portName, int maxArraySize, int nchan) :
+		acq164AsynPortDriver(portName, maxArraySize, nchan),
+		cursor(0)
+	{}
+	virtual void task();
 };
 
 
-double maxval;
-
-void RawFrameHandler::onFrame(
+void Acq164Device::onFrame(
 		Acq2xx& _card, const AcqType& _acqType,
 		const Frame* frame)
 {
 	const ConcreteFrame<int> *cf =
 				dynamic_cast<const ConcreteFrame<int> *>(frame);
+	const int maxPoints = get_maxPoints();
 
-
-	for (int ic = 0; ic < pd->nchan; ++ic){
+	for (int ic = 0; ic < nchan; ++ic){
 		int ix0 = ic*maxPoints;
 		int consecutive_zeros = 0;
 		const int* raw = cf->getChannel(ic+1);
@@ -195,28 +191,26 @@ void RawFrameHandler::onFrame(
 				}
 			}
 			double volts = 10.0*yy / (1<<24);
-			pd->pData_[ix0+cursor+id] = volts;
+			pData_[ix0+cursor+id] = volts;
 		}
 	}
 	cursor += 64;
 	if (cursor >= maxPoints){
 		//printf("%s %lld\n", __FUNCTION__, cf->getStartSampleNumber());
-		pd->setDoubleParam(pd->P_UpdateTime, cf->getStartSampleNumber());
-		pd->setDoubleParam(pd->P_MaxValue, maxval);
-		pd->callParamCallbacks();
+		setDoubleParam(P_UpdateTime, cf->getStartSampleNumber());
+		callParamCallbacks();
 
-		for (int ic=0; ic< pd->nchan; ic++){
+		for (int ic=0; ic< nchan; ic++){
 			int ix0 = ic*maxPoints;
-		  	pd->doCallbacksFloat64Array(pd->pData_+ix0, maxPoints, pd->P_Waveform, ic);
+		  	doCallbacksFloat64Array(pData_+ix0, maxPoints, P_Waveform, ic);
 		}
 		cursor = 0;
-		maxval = 0;
 	}
 }
 
 
 
-void acq164AsynPortDriver::acqTask(void)
+void Acq164Device::task(void)
 {
 	Transport *t = Transport::getTransport(portName);
 	Acq2xx card(t);
@@ -224,7 +218,7 @@ void acq164AsynPortDriver::acqTask(void)
 	DataStreamer* dataStreamer = DataStreamer::create(
 				card, AcqType::getAcqType(card));
 
-	dataStreamer->addFrameHandler(new RawFrameHandler(this));
+	dataStreamer->addFrameHandler(this);
 /*
 	dataStreamer->addFrameHandler(
 				DataStreamer::createMeanHandler(
@@ -239,7 +233,7 @@ void acq164AsynPortDriver::acqTask(void)
   * noise, and displays it on
   * a simulated scope.  It computes waveforms for the X (time) and Y (volt) axes, and computes
   * statistics about the waveform. */
-void acq164AsynPortDriver::simTask(void)
+void SimDevice::task(void)
 {
     /* This thread computes the waveform and does callbacks with it */
 
@@ -512,7 +506,12 @@ extern "C" {
   * \param[in] maxPoints The maximum  number of points in the volt and time arrays */
 int acq164AsynPortDriverConfigure(const char *portName, int maxPoints, int nchan)
 {
-    new acq164AsynPortDriver(portName, maxPoints, nchan);
+    if (::getenv("SIM") != 0 && atoi(::getenv("SIM")) != 0){
+    	new SimDevice(portName, maxPoints, nchan);
+    }else{
+    	new Acq164Device(portName, maxPoints, nchan);
+    }
+
     return(asynSuccess);
 }
 
