@@ -14,6 +14,8 @@
 
 #include "asynPortDriver.h"
 
+int acq200_debug;
+
 #define NUM_VERT_SELECTIONS 4
 
 
@@ -56,6 +58,7 @@ public:
                                 size_t nElements, size_t *nIn);
 
     /* These are the methods that are new to this class */
+    void acqTask(void);
     void simTask(void);
 
 protected:
@@ -81,8 +84,6 @@ protected:
 private:
     /* Our data */
     epicsEventId eventId_;
-    int nchan;
-    epicsFloat64 *pData_;
     epicsFloat64 *pTimeBase_;
     // Actual volts per division are these values divided by vertical gain
     char *voltsPerDivStrings_[NUM_VERT_SELECTIONS];
@@ -91,4 +92,19 @@ private:
     void setVertGain();
     void setVoltsPerDiv();
     void setTimePerDiv();
+
+
+
+
+    int nchan;
+    epicsFloat64 *pData_;
+
+    int get_maxPoints() {
+    	int maxPoints;
+    	getIntegerParam(P_MaxPoints,        &maxPoints);
+    	return maxPoints;
+    }
+
+
+friend class RawFrameHandler;
 };

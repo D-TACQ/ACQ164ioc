@@ -1,0 +1,6 @@
+record(lsi, "$(user):acq164:version") {
+    field(DTYP, "acq164 version")
+    field(DESC, "Version string")
+    field(SIZV, "$(SIZV=200)")
+    field(PINI, "YES")
+}

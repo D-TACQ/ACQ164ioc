@@ -40,6 +40,7 @@ static int allVoltsPerDivSelections[NUM_VERT_SELECTIONS]={1,2,5,10};
 
 static const char *driverName="acq164AsynPortDriver";
 void simTask(void *drvPvt);
+void acqTask(void *drvPvt);
 
 
 /** Constructor for the testAsynPortDriver class.
@@ -59,7 +60,6 @@ acq164AsynPortDriver::acq164AsynPortDriver(const char *portName, int maxPoints, 
 {
     asynStatus status;
     int i;
-    const char *functionName = "testAsynPortDriver";
 
     /* Make sure maxPoints is positive */
     if (maxPoints < 1) maxPoints = 100;
@@ -110,24 +110,33 @@ acq164AsynPortDriver::acq164AsynPortDriver(const char *portName, int maxPoints, 
     setDoubleParam (P_UpdateTime,        0.5);
     setDoubleParam (P_NoiseAmplitude,    0.1);
     setDoubleParam (P_MinValue,          0.0);
-    setDoubleParam (P_MaxValue,          0.0);
+    setDoubleParam (P_MaxValue,          3.3);
     setDoubleParam (P_MeanValue,         0.0);
 
 
+    int sim = 0;
+    if (getenv("SIM")){
+    	sim = atoi(getenv("SIM"));
+    }
     /* Create the thread that computes the waveforms in the background */
     status = (asynStatus)(epicsThreadCreate("testAsynPortDriverTask",
                           epicsThreadPriorityMedium,
                           epicsThreadGetStackSize(epicsThreadStackMedium),
-                          (EPICSTHREADFUNC)::simTask,
+						  sim==0? (EPICSTHREADFUNC)::acqTask: (EPICSTHREADFUNC)::simTask,
                           this) == NULL);
     if (status) {
-        printf("%s:%s: epicsThreadCreate failure\n", driverName, functionName);
+        printf("%s:%s: epicsThreadCreate failure\n", driverName, __FUNCTION__);
         return;
     }
 }
 
 
+void acqTask(void *drvPvt)
+{
+    acq164AsynPortDriver *pPvt = (acq164AsynPortDriver *)drvPvt;
 
+    pPvt->acqTask();
+}
 void simTask(void *drvPvt)
 {
     acq164AsynPortDriver *pPvt = (acq164AsynPortDriver *)drvPvt;
@@ -135,6 +144,96 @@ void simTask(void *drvPvt)
     pPvt->simTask();
 }
 
+//#include "local.h"
+#include "acq2xx_api.h"
+#include "acq_transport.h"
+#include "AcqType.h"
+#include "Frame.h"
+
+#include "DataStreamer.h"
+#include "DirfileFrameHandler.h"
+
+class RawFrameHandler: public FrameHandler {
+	virtual void onFrame(
+			Acq2xx& _card, const AcqType& _acqType,
+			const Frame* frame);
+	acq164AsynPortDriver* pd;
+	int cursor;
+	int maxPoints;
+public:
+	RawFrameHandler(acq164AsynPortDriver* _pd) :
+		pd(_pd), cursor(0)
+	{
+		maxPoints = pd->get_maxPoints();
+		fprintf(stderr, "%s setting maxPoints %d\n", __FUNCTION__, maxPoints);
+		fprintf(stderr, "%s sizeof(int) %d\n", __FUNCTION__, sizeof(int));
+	}
+	virtual ~RawFrameHandler() {}
+};
+
+
+double maxval;
+
+void RawFrameHandler::onFrame(
+		Acq2xx& _card, const AcqType& _acqType,
+		const Frame* frame)
+{
+	const ConcreteFrame<int> *cf =
+				dynamic_cast<const ConcreteFrame<int> *>(frame);
+
+
+	for (int ic = 0; ic < pd->nchan; ++ic){
+		int ix0 = ic*maxPoints;
+		int consecutive_zeros = 0;
+		const int* raw = cf->getChannel(ic+1);
+		for (int id = 0; id < 64; ++id){
+			int yy = raw[id];
+			if (yy == 0){
+				if (++consecutive_zeros > 60){
+					printf("%s zeros detected at %lld\n", __FUNCTION__, cf->getStartSampleNumber());
+					exit(1);
+				}
+			}
+			double volts = 10.0*yy / (1<<24);
+			pd->pData_[ix0+cursor+id] = volts;
+		}
+	}
+	cursor += 64;
+	if (cursor >= maxPoints){
+		//printf("%s %lld\n", __FUNCTION__, cf->getStartSampleNumber());
+		pd->setDoubleParam(pd->P_UpdateTime, cf->getStartSampleNumber());
+		pd->setDoubleParam(pd->P_MaxValue, maxval);
+		pd->callParamCallbacks();
+
+		for (int ic=0; ic< pd->nchan; ic++){
+			int ix0 = ic*maxPoints;
+		  	pd->doCallbacksFloat64Array(pd->pData_+ix0, maxPoints, pd->P_Waveform, ic);
+		}
+		cursor = 0;
+		maxval = 0;
+	}
+}
+
+
+
+void acq164AsynPortDriver::acqTask(void)
+{
+	Transport *t = Transport::getTransport(portName);
+	Acq2xx card(t);
+
+	DataStreamer* dataStreamer = DataStreamer::create(
+				card, AcqType::getAcqType(card));
+
+	dataStreamer->addFrameHandler(new RawFrameHandler(this));
+/*
+	dataStreamer->addFrameHandler(
+				DataStreamer::createMeanHandler(
+					AcqType::getAcqType(card), 1));
+	dataStreamer->addFrameHandler(
+				DataStreamer::createNewlineHandler());
+*/
+	dataStreamer->streamData();
+}
 /** Simulation task that runs as a separate thread.  When the P_Run parameter is set to 1
   * to rub the simulation it computes a 1 kHz sine wave with 1V amplitude and user-controllable
   * noise, and displays it on
@@ -200,6 +299,7 @@ void acq164AsynPortDriver::simTask(void)
         setDoubleParam(P_MinValue, minValue);
         setDoubleParam(P_MaxValue, maxValue);
         setDoubleParam(P_MeanValue, meanValue);
+
         callParamCallbacks();
         for (int c=0; c<nchan; c++){
         	doCallbacksFloat64Array(pData_+c*maxPoints, maxPoints, P_Waveform, c);

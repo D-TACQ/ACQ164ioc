@@ -5,7 +5,7 @@ include $(TOP)/configure/CONFIG
 #  ADD MACRO DEFINITIONS BELOW HERE
 
 # Use typed rset structure (see 3.16.1 release notes)
-USR_CPPFLAGS += -DUSE_TYPED_RSET
+USR_CPPFLAGS += -DUSE_TYPED_RSET -I../../../../ACQ200API
 
 # xxxRecord.h will be created from xxxRecord.dbd
 DBDINC += xxxRecord
@@ -63,6 +63,7 @@ acq164_SRCS_vxWorks += -nil-
 acq164_LIBS += acq164Support
 acq164_LIBS += stream
 acq164_LIBS += asyn
+acq164_LIBS += acq2xx_api
 
 # To build SNL programs, SNCSEQ must be defined
 # in the <top>/configure/RELEASE file

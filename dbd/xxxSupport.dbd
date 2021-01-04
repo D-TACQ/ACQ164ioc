@@ -1,0 +1,6 @@
+include "xxxRecord.dbd"
+device(xxx,CONSTANT,devXxxSoft,"SoftChannel")
+include "stream.dbd"
+include "asyn.dbd"
+registrar(drvAsynIPPortRegisterCommands)
+
