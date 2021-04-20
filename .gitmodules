@@ -10,6 +10,6 @@
 	path = support/stream
 	url = https://github.com/D-TACQ/StreamDevice.git
 	branch = master
-[submodule "support/EPICS-pcre"]
-	path = support/EPICS-pcre
+[submodule "support/pcre"]
+	path = support/pcre
 	url = https://github.com/ISISComputingGroup/EPICS-pcre.git
