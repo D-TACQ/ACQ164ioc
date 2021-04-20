@@ -4,6 +4,8 @@ include $(TOP)/configure/CONFIG
 #----------------------------------------
 #  ADD MACRO DEFINITIONS BELOW HERE
 
+$(COMMON_DIR)/acq164.dbd: $(COMMON_DIR)/acq164AsynPortDriver.dbd
+
 # Use typed rset structure (see 3.16.1 release notes)
 USR_CPPFLAGS += -DUSE_TYPED_RSET -I../../../../ACQ200API
 
@@ -67,12 +69,14 @@ acq164_LIBS += acq2xx_api
 
 # To build SNL programs, SNCSEQ must be defined
 # in the <top>/configure/RELEASE file
-ifneq ($(SNCSEQ),)
+#ifneq ($(SNCSEQ),)
+ifeq ($(SNCSEQ),PGMCOMOUT)
+    $(info PWMWASHERE WITH SNCSEQ)
     # Build sncExample into acq164Support
-    sncExample_SNCFLAGS += +r
-    acq164_DBD += sncExample.dbd
+#    sncExample_SNCFLAGS += +r
+#    acq164_DBD += sncExample.dbd
     # A .stt sequence program is *not* pre-processed:
-    acq164Support_SRCS += sncExample.stt
+#    acq164Support_SRCS += sncExample.stt
     acq164Support_LIBS += seq pv
     acq164_LIBS += seq pv
 
