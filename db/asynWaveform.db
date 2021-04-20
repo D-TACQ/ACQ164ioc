@@ -1,7 +1,7 @@
 ###################################################################
 #  This record is the waveform                                    #
 ###################################################################
-record(waveform, "$(P)$(R)Waveform_RBV:$(CH)")
+record(waveform, "$(P)$(R):AI:WF:$(CH)")
 {
     field(DTYP, "asynFloat64ArrayIn")
     field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))SCOPE_WAVEFORM")
