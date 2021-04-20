@@ -1,0 +1,12 @@
+[submodule "ACQ200API"]
+	path = ACQ200API
+	url = https://github.com/petermilne/ACQ200API.git
+	branch = master
+[submodule "support/seq"]
+	path = support/seq
+	url = https://github.com/D-TACQ/EPICS-seq.git
+	branch = master
+[submodule "support/stream"]
+	path = support/stream
+	url = https://github.com/D-TACQ/StreamDevice.git
+	branch = master
