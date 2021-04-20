@@ -1,6 +1,7 @@
 [submodule "ACQ200API"]
 	path = ACQ200API
-	url = https://github.com/petermilne/ACQ200API.git
+	url = git@github.com:petermilne/ACQ200API.git
+#	url = https://github.com/petermilne/ACQ200API.git
 	branch = master
 [submodule "support/seq"]
 	path = support/seq
@@ -19,3 +20,6 @@
 [submodule "support/asyn"]
 	path = support/asyn
 	url = https://github.com/D-TACQ/asyn.git
+[submodule "acq164ioc"]
+	path = acq164ioc
+	url = https://github.com/D-TACQ/acq164ioc

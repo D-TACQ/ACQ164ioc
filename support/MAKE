@@ -1,0 +1,18 @@
+(cd ACQ200API; make lib; cp ./x86/lib/* ../acq164ioc/lib/linux-x86_64/)
+(cd base; make)
+
+source ./setup.env
+mkdir support
+(
+(cd seq; make)
+(cd asyn; make)
+(cd pcre; make)
+(cd stream; make)
+
+sudo dnf install rpcgen
+sudo dnf install libtirpc-devel
+
+)
+
+cd acq164ioc; make
+
