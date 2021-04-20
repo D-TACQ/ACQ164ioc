@@ -13,6 +13,6 @@
 [submodule "support/pcre"]
 	path = support/pcre
 	url = https://github.com/ISISComputingGroup/EPICS-pcre.git
-[submodule "support/asyn"]
-	path = support/asyn
-	url = https://github.com/epics-modules/asyn.git
+[submodule "base"]
+	path = base
+	url = https://github.com/epics-base/epics-base.git
