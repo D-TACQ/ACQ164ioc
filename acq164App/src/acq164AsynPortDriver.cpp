@@ -298,31 +298,62 @@ asynStatus acq164AsynPortDriver::readEnum(asynUser *pasynUser, char *strings[], 
 #include "DirfileFrameHandler.h"
 
 class Acq164Device: public acq164AsynPortDriver, FrameHandler {
+	int verbose;
 	int cursor;
 	virtual void onFrame(
 			Acq2xx& _card, const AcqType& _acqType,
 			const Frame* frame);
 
+	double* eslo;
+	double* eoff;
+
+	void compute_cal(Acq2xx& card);
 public:
 	Acq164Device(const char *portName, int maxArraySize, int nchan) :
 		acq164AsynPortDriver(portName, maxArraySize, nchan),
 		cursor(0)
-	{}
+	{
+		const char* key = ::getenv("ACQ164DEVICE_VERBOSE");
+		if (key){
+			verbose = ::strtoul(key, 0, 0);
+		}
+	}
 	virtual void task();
 };
 
-class SimDevice: public acq164AsynPortDriver {
-	int cursor;
+/*
+ *  y = mx + c
+ *  (y - Y1)/(x-X1) = (Y2-Y1)/(X2-X1)
+ *
+ *  y = Y1 + (x-X1)*(Y2-Y1)/(X2-X1)
+ *  y = x*ESLO + Y1-X1*ESLO
+ *
+ *  ESLO = (Y2-Y1)/(X2-X1) = (Y2-Y1)/(1<<24)
+ *  EOFF = Y1 -X1*ESLO
+ */
+void Acq164Device::compute_cal(Acq2xx& card)
+{
+	acq2xx_VRange* ranges = new acq2xx_VRange[nchan+2];  /* +2? Bug in getChannelRanges() ? */
+	eslo = new double[nchan];
+	eoff = new double[nchan];
+	int X1 = -(1<<23);
+	int X2 = 1<<23;
 
+	if (verbose) printf("nchan:%d\n", nchan);
 
-public:
-	SimDevice(const char *portName, int maxArraySize, int nchan) :
-		acq164AsynPortDriver(portName, maxArraySize, nchan),
-		cursor(0)
-	{}
-	virtual void task();
-};
+	card.getChannelRanges(ranges, nchan+1);
+	for (int ii = 0; ii < nchan; ++ii){
+		double Y1 = ranges[ii+1].vmin;
+		double Y2 = ranges[ii+1].vmax;
+		double ESLO = (Y2-Y1)/(X2-X1);
+		double EOFF = Y1 - X1*ESLO;
+		if (verbose) printf("[%2d] Y1:%.2f Y2:%.2f %x ESLO:%.5g EOFF:%.5f\n", ii, Y1, Y2, X2-X1, ESLO, EOFF);
+		eslo[ii] = ESLO;
+		eoff[ii] = EOFF;
+	}
 
+	delete[] ranges;
+}
 
 void Acq164Device::onFrame(
 		Acq2xx& _card, const AcqType& _acqType,
@@ -344,7 +375,7 @@ void Acq164Device::onFrame(
 					exit(1);
 				}
 			}
-			double volts = 10.0*yy / (1<<24);
+			double volts = eslo[ic]*yy + eoff[ic];
 			pData_[ix0+cursor+id] = volts;
 		}
 	}
@@ -368,10 +399,9 @@ void Acq164Device::task(void)
 {
 	Transport *t = Transport::getTransport(portName);
 	Acq2xx card(t);
-
 	DataStreamer* dataStreamer = DataStreamer::create(
 				card, AcqType::getAcqType(card));
-
+	compute_cal(card);
 	dataStreamer->addFrameHandler(this);
 /*
 	dataStreamer->addFrameHandler(
