@@ -1,7 +1,7 @@
 ###################################################################
 #  These records control run/stop                                 # 
 ###################################################################
-record(bo, "$(P)$(R)Run")
+record(bo, "$(P)$(R):Run")
 {
     field(PINI,  "1")
     field(DTYP, "asynInt32")
@@ -10,7 +10,7 @@ record(bo, "$(P)$(R)Run")
     field(ONAM, "Run")
 }
 
-record(bi, "$(P)$(R)Run_RBV")
+record(bi, "$(P)$(R):Run_RBV")
 {
     field(PINI, "1")
     field(DTYP, "asynInt32")
@@ -26,7 +26,7 @@ record(bi, "$(P)$(R)Run_RBV")
 #  This records is the number of points                           # 
 ###################################################################
 
-record(longin, "$(P)$(R)MaxPoints_RBV")
+record(longin, "$(P)$(R):MaxPoints_RBV")
 {
    field(PINI, "1")
    field(DTYP, "asynInt32")
@@ -40,7 +40,7 @@ record(longin, "$(P)$(R)MaxPoints_RBV")
 ###################################################################
 #  These records are the noise amplitude                           #
 ###################################################################
-record(ao, "$(P)$(R)NoiseAmplitude")
+record(ao, "$(P)$(R):NoiseAmplitude")
 {
    field(PINI, "1")
    field(DTYP, "asynFloat64")
@@ -48,7 +48,7 @@ record(ao, "$(P)$(R)NoiseAmplitude")
    field(PREC, "3")
 }
 
-record(ai, "$(P)$(R)NoiseAmplitude_RBV")
+record(ai, "$(P)$(R):NoiseAmplitude_RBV")
 {
    field(PINI, "1")
    field(DTYP, "asynFloat64")
@@ -60,7 +60,7 @@ record(ai, "$(P)$(R)NoiseAmplitude_RBV")
 ###################################################################
 #  These records are the update time                              #
 ###################################################################
-record(ao, "$(P)$(R)UpdateTime")
+record(ao, "$(P)$(R):UpdateTime")
 {
    field(PINI, "1")
    field(DTYP, "asynFloat64")
@@ -68,7 +68,7 @@ record(ao, "$(P)$(R)UpdateTime")
    field(PREC, "3")
 }
 
-record(ai, "$(P)$(R)UpdateTime_RBV")
+record(ai, "$(P)$(R):UpdateTime_RBV")
 {
    field(PINI, "1")
    field(DTYP, "asynFloat64")
@@ -94,7 +94,7 @@ record(ao, "${P}:AI:SCAN_FREQ")
 ###################################################################
 #  This record is the time base                                   #
 ###################################################################
-record(waveform, "$(P)$(R)TimeBase_RBV")
+record(waveform, "$(P)$(R):TimeBase_RBV")
 {
     field(PINI, "1")
     field(DTYP, "asynFloat64ArrayIn")
@@ -108,7 +108,7 @@ record(waveform, "$(P)$(R)TimeBase_RBV")
 ###################################################################
 #  This record is the minimum value                               #
 ###################################################################
-record(ai, "$(P)$(R)MinValue_RBV")
+record(ai, "$(P)$(R):MinValue_RBV")
 {
    field(PINI, "1")
    field(DTYP, "asynFloat64")
@@ -120,7 +120,7 @@ record(ai, "$(P)$(R)MinValue_RBV")
 ###################################################################
 #  This record is the maximum value                               #
 ###################################################################
-record(ai, "$(P)$(R)MaxValue_RBV")
+record(ai, "$(P)$(R):MaxValue_RBV")
 {
    field(PINI, "1")
    field(DTYP, "asynFloat64")
@@ -132,7 +132,7 @@ record(ai, "$(P)$(R)MaxValue_RBV")
 ###################################################################
 #  This record is the mean value                               #
 ###################################################################
-record(ai, "$(P)$(R)MeanValue_RBV")
+record(ai, "$(P)$(R):MeanValue_RBV")
 {
    field(PINI, "1")
    field(DTYP, "asynFloat64")

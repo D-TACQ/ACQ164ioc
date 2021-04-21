@@ -14,7 +14,7 @@ acq164_registerRecordDeviceDriver pdbbase
 # Turn on asynTraceFlow and asynTraceError for global trace, i.e. no connected asynUser.
 asynSetTraceMask("", 0, 17)
 
-acq164AsynPortDriverConfigure("${UUT}", ${SIZE}, 32)
+acq164AsynPortDriverConfigure("${UUT}", ${SIZE}, ${NCHAN})
 
 dbLoadRecords("db/testAsynPortDriver.db","P=${UUT}:,R=1,PORT=${UUT},ADDR=0,TIMEOUT=1,NPOINTS=${SIZE}")
 dbLoadRecords("db/asynWaveform.db","P=${UUT}:,R=1,PORT=${UUT},CH=01,ADDR=0,TIMEOUT=1,NPOINTS=${SIZE}")

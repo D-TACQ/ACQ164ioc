@@ -96,19 +96,23 @@ public:
 	}
 	void set(int ic, T y1){
 		ch[ic] += y1;
+		if (ic == 0) nadd += 1;
 	}
-	bool update_timestamp(epicsTimeStamp& t1, int nsec)
+	bool update_timestamp(int nsec)
 	/* return true if nsec exceeeded since first update */
 	{
+		epicsTimeStamp t1;
+		epicsTimeGetCurrent(&t1);
+
 		if (t0.secPastEpoch == 0){
-			t0 = t1;
+			t0.secPastEpoch = t1.secPastEpoch;
+			t0.nsec = t1.nsec;
 			return false;
 		}else if (diff(t1, t0) > nsec){
 			return true;
 		}else{
 			return false;
 		}
-		return false;
 	}
 	T get(int ic){
 		if (nadd){

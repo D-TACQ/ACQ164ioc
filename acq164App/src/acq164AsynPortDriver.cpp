@@ -371,7 +371,7 @@ void Acq164Device::onFrame(
 		int ix0 = ic*maxPoints;
 		int consecutive_zeros = 0;
 		const int* raw = cf->getChannel(ic+1);
-		for (int id = 0; id < 64; ++id){
+		for (int id = 0; id < FRAME_SAMPLES; ++id){
 			int yy = raw[id];
 			if (yy == 0){
 				if (++consecutive_zeros > 60){
@@ -384,20 +384,20 @@ void Acq164Device::onFrame(
 			acc.set(ic, volts);
 		}
 	}
-	cursor += 64;
+	cursor += FRAME_SAMPLES;
 
 	int scan_freq;
 	getIntegerParam(P_ScanFreq, &scan_freq);
-	epicsTimeStamp t1;
-	getTimeStamp(&t1);
 
-	if (acc.update_timestamp(t1, NSPS/scan_freq)){
+	if (acc.update_timestamp(NSPS/scan_freq)){
 		for (int ic = 0; ic < nchan; ++ic){
+			if (verbose && ic < 3) printf("setDoubleParam(%d %d %f\n", ic, P_Scalar, acc.get(ic));
 			setDoubleParam(ic, P_Scalar, acc.get(ic));
 			callParamCallbacks(ic);
 		}
+		acc.clear();
 	}
-	acc.clear();
+
 	if (cursor >= maxPoints){
 		//printf("%s %lld\n", __FUNCTION__, cf->getStartSampleNumber());
 		setDoubleParam(P_UpdateTime, cf->getStartSampleNumber());

@@ -10,6 +10,7 @@ record(waveform, "$(P)$(R):AI:WF:$(CH)")
     field(LOPR, "-10")
     field(HOPR, "10")
     field(SCAN, "I/O Intr")
+    field(EGU, 	"V")
     field(FLNK, "$(P)$(R):AI:WF:$(CH):UPDATES PP")
 }
 
@@ -22,8 +23,10 @@ record(calc, "$(P)$(R):AI:WF:$(CH):UPDATES") {
 record(ai, "$(P)$(R):AI:CH:$(CH)")
 {
     field(DTYP, "asynFloat64")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))SCOPE_SCALAR")    
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))SCOPE_SCALAR") 
+    field(LINR, "NO CONVERSION")   
     field(LOPR, "-10")
     field(HOPR, "10")
     field(SCAN, "I/O Intr")
+    field(EGU, 	"V")
 }
