@@ -7,7 +7,23 @@ record(waveform, "$(P)$(R):AI:WF:$(CH)")
     field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))SCOPE_WAVEFORM")
     field(FTVL, "DOUBLE")
     field(NELM, "$(NPOINTS)")
-    field(LOPR, "0")
+    field(LOPR, "-10")
+    field(HOPR, "10")
+    field(SCAN, "I/O Intr")
+    field(FLNK, "$(P)$(R):AI:WF:$(CH):UPDATES PP")
+}
+
+record(calc, "$(P)$(R):AI:WF:$(CH):UPDATES") {
+	field(SCAN, "Passive")
+	field(CALC, "VAL + 1")
+# FLNK can be used as hook for further processing 	
+}
+
+record(ai, "$(P)$(R):AI:CH:$(CH)")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))SCOPE_SCALAR")    
+    field(LOPR, "-10")
     field(HOPR, "10")
     field(SCAN, "I/O Intr")
 }

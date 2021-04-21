@@ -77,6 +77,18 @@ record(ai, "$(P)$(R)UpdateTime_RBV")
    field(SCAN, "I/O Intr")
 }
 
+record(ao, "${P}:AI:SCAN_FREQ")
+{
+	field(PINI, "2")
+	field(DTYP, "asynInt32")
+	field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))SCAN_FREQ")
+	field(HOPR, "1000000")
+	field(LOPR,  "1")
+	field(VAL,   "30")
+	field(EGU,  "Hz")
+	field(DRVH, "30")
+	field(DRVL, "1")		
+}
 
 
 ###################################################################

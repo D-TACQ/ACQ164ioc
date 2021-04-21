@@ -51,11 +51,73 @@ int acq200_debug;
 #define P_NoiseAmplitudeString     "SCOPE_NOISE_AMPLITUDE"      /* asynFloat64,  r/w */
 #define P_UpdateTimeString         "SCOPE_UPDATE_TIME"          /* asynFloat64,  r/w */
 #define P_WaveformString           "SCOPE_WAVEFORM"             /* asynFloat64Array,  r/o */
-#define P_AIString           	   "SCOPE_SCALAR"               /* asynFloat64,  r/o */
+#define P_ScalarString             "SCOPE_SCALAR"               /* asynFloat64,  r/o */
 #define P_TimeBaseString           "SCOPE_TIME_BASE"            /* asynFloat64Array,  r/o */
 #define P_MinValueString           "SCOPE_MIN_VALUE"            /* asynFloat64,  r/o */
 #define P_MaxValueString           "SCOPE_MAX_VALUE"            /* asynFloat64,  r/o */
 #define P_MeanValueString          "SCOPE_MEAN_VALUE"           /* asynFloat64,  r/o */
+#define PS_SCAN_FREQ			   "SCAN_FREQ"			        /* asynInt32,  r/w scalar update in Hz */
+
+#define NSPS 1000000000
+
+template <class T>
+class Acc {
+	const int nchan;
+
+	int diff(epicsTimeStamp& t1, epicsTimeStamp& t0)
+	/* return t1-t0 in nsec */
+	{
+		if (t1.secPastEpoch < t0.secPastEpoch){
+			return -1;
+		}
+		if (t1.nsec > t0.nsec){
+			return t1.nsec - t0.nsec + (t1.secPastEpoch - t0.secPastEpoch)*NSPS;
+		}else if (t1.secPastEpoch > t0.secPastEpoch){
+			return t1.nsec + NSPS - t0.nsec + (t1.secPastEpoch - t0.secPastEpoch - 1)*NSPS;
+		}else{
+			return -2;
+		}
+	}
+
+public:
+	T *ch;
+	int nadd;
+	epicsTimeStamp t0;
+
+
+
+	Acc(int _nchan): nchan(_nchan), nadd(0) {
+		ch = new T[nchan];
+	}
+	void clear() {
+		memset(ch, 0, nchan*sizeof(T));
+		nadd = 0;
+		t0.secPastEpoch = 0;
+	}
+	void set(int ic, T y1){
+		ch[ic] += y1;
+	}
+	bool update_timestamp(epicsTimeStamp& t1, int nsec)
+	/* return true if nsec exceeeded since first update */
+	{
+		if (t0.secPastEpoch == 0){
+			t0 = t1;
+			return false;
+		}else if (diff(t1, t0) > nsec){
+			return true;
+		}else{
+			return false;
+		}
+		return false;
+	}
+	T get(int ic){
+		if (nadd){
+			return ch[ic]/ nadd;
+		}else{
+			return 0;
+		}
+	}
+};
 
 /** Class that demonstrates the use of the asynPortDriver base class to greatly simplify the task
   * of writing an asyn port driver.
@@ -80,6 +142,7 @@ public:
     static int factory(const char *portName, int maxPoints, int nchan);
 
 protected:
+
     /** Values used for pasynUser->reason, and indexes into the parameter library. */
     int P_Run;
     int P_MaxPoints;
@@ -87,16 +150,19 @@ protected:
     int P_NoiseAmplitude;
     int P_UpdateTime;
     int P_Waveform;
+    int P_Scalar;
     int P_TimeBase;
     int P_MinValue;
     int P_MaxValue;
     int P_MeanValue;
+    int P_ScanFreq;
 
     /* Our data */
     epicsEventId eventId_;
     epicsFloat64 *pTimeBase_;
 
     int nchan;
+    Acc<double> acc;
     epicsFloat64 *pData_;
 
     int get_maxPoints() {

@@ -24,7 +24,7 @@
 \* ------------------------------------------------------------------------- */
 
 /*
- * testAsynPortDriver.cpp
+ * adapted from testAsynPortDriver.cpp
  *
  * Asyn driver that inherits from the asynPortDriver class to demonstrate its use.
  * It simulates a digital scope looking at a 1kHz 1000-point noisy sine wave.  Controls are
@@ -84,7 +84,8 @@ acq164AsynPortDriver::acq164AsynPortDriver(const char *portName, int maxPoints, 
                     1, /* Autoconnect */
                     0, /* Default priority */
                     0) /* Default stack size*/,
-					nchan(_nchan)
+					nchan(_nchan),
+					acc(_nchan)
 {
     asynStatus status;
     int i;
@@ -97,6 +98,7 @@ acq164AsynPortDriver::acq164AsynPortDriver(const char *portName, int maxPoints, 
 
     /* Allocate the time base array */
     pTimeBase_ = (epicsFloat64 *)calloc(maxPoints, sizeof(epicsFloat64));
+
     /* Set the time base array */
     for (i=0; i<maxPoints; i++) pTimeBase_[i] = (double)i / (maxPoints-1) * NUM_DIVISIONS;
 
@@ -106,10 +108,12 @@ acq164AsynPortDriver::acq164AsynPortDriver(const char *portName, int maxPoints, 
     createParam(P_NoiseAmplitudeString,     asynParamFloat64,       &P_NoiseAmplitude);
     createParam(P_UpdateTimeString,         asynParamFloat64,       &P_UpdateTime);
     createParam(P_WaveformString,           asynParamFloat64Array,  &P_Waveform);
+    createParam(P_ScalarString,				asynParamFloat64,		&P_Scalar);
     createParam(P_TimeBaseString,           asynParamFloat64Array,  &P_TimeBase);
     createParam(P_MinValueString,           asynParamFloat64,       &P_MinValue);
     createParam(P_MaxValueString,           asynParamFloat64,       &P_MaxValue);
     createParam(P_MeanValueString,          asynParamFloat64,       &P_MeanValue);
+    createParam(PS_SCAN_FREQ,          		asynParamInt32,       	&P_ScanFreq);
 
     /* Set the initial values of some parameters */
     setIntegerParam(P_MaxPoints,         maxPoints);
@@ -377,9 +381,23 @@ void Acq164Device::onFrame(
 			}
 			double volts = eslo[ic]*yy + eoff[ic];
 			pData_[ix0+cursor+id] = volts;
+			acc.set(ic, volts);
 		}
 	}
 	cursor += 64;
+
+	int scan_freq;
+	getIntegerParam(P_ScanFreq, &scan_freq);
+	epicsTimeStamp t1;
+	getTimeStamp(&t1);
+
+	if (acc.update_timestamp(t1, NSPS/scan_freq)){
+		for (int ic = 0; ic < nchan; ++ic){
+			setDoubleParam(ic, P_Scalar, acc.get(ic));
+			callParamCallbacks(ic);
+		}
+	}
+	acc.clear();
 	if (cursor >= maxPoints){
 		//printf("%s %lld\n", __FUNCTION__, cf->getStartSampleNumber());
 		setDoubleParam(P_UpdateTime, cf->getStartSampleNumber());
