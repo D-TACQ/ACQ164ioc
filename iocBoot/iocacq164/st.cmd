@@ -16,7 +16,7 @@ asynSetTraceMask("", 0, 17)
 
 acq164AsynPortDriverConfigure("${UUT}", ${SIZE}, ${NCHAN})
 
-dbLoadRecords("db/testAsynPortDriver.db","P=${UUT}:,R=1,PORT=${UUT},ADDR=0,TIMEOUT=1,NPOINTS=${SIZE}")
+dbLoadRecords("db/testAsynPortDriver.db","P=${UUT}:,R=1,PORT=${UUT},ADDR=0,TIMEOUT=1,NPOINTS=${SIZE},NCHAN=${NCHAN}")
 dbLoadRecords("db/asynWaveform.db","P=${UUT}:,R=1,PORT=${UUT},CH=01,ADDR=0,TIMEOUT=1,NPOINTS=${SIZE}")
 dbLoadRecords("db/asynWaveform.db","P=${UUT}:,R=1,PORT=${UUT},CH=02,ADDR=1,TIMEOUT=1,NPOINTS=${SIZE}")
 dbLoadRecords("db/asynWaveform.db","P=${UUT}:,R=1,PORT=${UUT},CH=03,ADDR=2,TIMEOUT=1,NPOINTS=${SIZE}")

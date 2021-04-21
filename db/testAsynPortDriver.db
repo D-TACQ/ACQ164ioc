@@ -34,6 +34,13 @@ record(longin, "$(P)$(R):MaxPoints_RBV")
    field(SCAN, "I/O Intr")
 }
 
+record(longin, "$(P)$(R):NCHAN")
+{
+   field(PINI, "1")
+   field(DTYP, "Soft Channel")
+   field(VAL,  "${NCHAN}")
+}
+
 
 
 
