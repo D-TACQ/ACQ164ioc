@@ -1,3 +1,28 @@
+/* ------------------------------------------------------------------------- */
+/* acq164asynPortDriver.cpp
+ * Project: ACQ420_FMC
+ * Created: Thu Dec 31 15:16:04 2020                      / User: pgm
+ * ------------------------------------------------------------------------- *
+ *   Copyright (C) 2020/2021 Peter Milne, D-TACQ Solutions Ltd         *
+ *                      <peter dot milne at D hyphen TACQ dot com>           *
+ *                                                                           *
+ *  This program is free software; you can redistribute it and/or modify     *
+ *  it under the terms of Version 2 of the GNU General Public License        *
+ *  as published by the Free Software Foundation;                            *
+ *                                                                           *
+ *  This program is distributed in the hope that it will be useful,          *
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of           *
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            *
+ *  GNU General Public License for more details.                             *
+ *                                                                           *
+ *  You should have received a copy of the GNU General Public License        *
+ *  along with this program; if not, write to the Free Software              *
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.                *
+ *
+ * TODO
+ * TODO
+\* ------------------------------------------------------------------------- */
+
 /*
  * testAsynPortDriver.cpp
  *
@@ -36,7 +61,6 @@
 #define MIN_UPDATE_TIME 0.02 /* Minimum update time, to prevent CPU saturation */
 
 #define MAX_ENUM_STRING_SIZE 20
-static int allVoltsPerDivSelections[NUM_VERT_SELECTIONS]={1,2,5,10};
 
 static const char *driverName="acq164AsynPortDriver";
 
@@ -79,14 +103,6 @@ acq164AsynPortDriver::acq164AsynPortDriver(const char *portName, int maxPoints, 
     eventId_ = epicsEventCreate(epicsEventEmpty);
     createParam(P_RunString,                asynParamInt32,         &P_Run);
     createParam(P_MaxPointsString,          asynParamInt32,         &P_MaxPoints);
-    createParam(P_TimePerDivString,         asynParamFloat64,       &P_TimePerDiv);
-    createParam(P_TimePerDivSelectString,   asynParamInt32,         &P_TimePerDivSelect);
-    createParam(P_VertGainString,           asynParamFloat64,       &P_VertGain);
-    createParam(P_VertGainSelectString,     asynParamInt32,         &P_VertGainSelect);
-    createParam(P_VoltsPerDivString,        asynParamFloat64,       &P_VoltsPerDiv);
-    createParam(P_VoltsPerDivSelectString,  asynParamInt32,         &P_VoltsPerDivSelect);
-    createParam(P_VoltOffsetString,         asynParamFloat64,       &P_VoltOffset);
-    createParam(P_TriggerDelayString,       asynParamFloat64,       &P_TriggerDelay);
     createParam(P_NoiseAmplitudeString,     asynParamFloat64,       &P_NoiseAmplitude);
     createParam(P_UpdateTimeString,         asynParamFloat64,       &P_UpdateTime);
     createParam(P_WaveformString,           asynParamFloat64Array,  &P_Waveform);
@@ -95,22 +111,10 @@ acq164AsynPortDriver::acq164AsynPortDriver(const char *portName, int maxPoints, 
     createParam(P_MaxValueString,           asynParamFloat64,       &P_MaxValue);
     createParam(P_MeanValueString,          asynParamFloat64,       &P_MeanValue);
 
-    for (i=0; i<NUM_VERT_SELECTIONS; i++) {
-        // Compute vertical volts per division in mV
-        voltsPerDivValues_[i] = 0;
-        voltsPerDivStrings_[i] = (char *)calloc(MAX_ENUM_STRING_SIZE, sizeof(char));
-        voltsPerDivSeverities_[i] = 0;
-    }
-
     /* Set the initial values of some parameters */
     setIntegerParam(P_MaxPoints,         maxPoints);
     setIntegerParam(P_Run,               0);
-    setIntegerParam(P_VertGainSelect,    10);
-    setVertGain();
-    setDoubleParam (P_VoltsPerDiv,       1.0);
-    setDoubleParam (P_VoltOffset,        0.0);
-    setDoubleParam (P_TriggerDelay,      0.0);
-    setDoubleParam (P_TimePerDiv,        0.001);
+
     setDoubleParam (P_UpdateTime,        0.5);
     setDoubleParam (P_NoiseAmplitude,    0.1);
     setDoubleParam (P_MinValue,          0.0);
@@ -156,15 +160,6 @@ asynStatus acq164AsynPortDriver::writeInt32(asynUser *pasynUser, epicsInt32 valu
     if (function == P_Run) {
         /* If run was set then wake up the simulation task */
         if (value) epicsEventSignal(eventId_);
-    }
-    else if (function == P_VertGainSelect) {
-        setVertGain();
-    }
-    else if (function == P_VoltsPerDivSelect) {
-        setVoltsPerDiv();
-    }
-    else if (function == P_TimePerDivSelect) {
-        setTimePerDiv();
     }
     else {
         /* All other parameters just get set in parameter list, no need to
@@ -277,16 +272,11 @@ asynStatus acq164AsynPortDriver::readFloat64Array(asynUser *pasynUser, epicsFloa
 
 asynStatus acq164AsynPortDriver::readEnum(asynUser *pasynUser, char *strings[], int values[], int severities[], size_t nElements, size_t *nIn)
 {
-    int function = pasynUser->reason;
+    //int function = pasynUser->reason;
     size_t i;
 
-    if (function == P_VoltsPerDivSelect) {
-        for (i=0; ((i<NUM_VERT_SELECTIONS) && (i<nElements)); i++) {
-            if (strings[i]) free(strings[i]);
-            strings[i] = epicsStrDup(voltsPerDivStrings_[i]);
-            values[i] = voltsPerDivValues_[i];
-            severities[i] = 0;
-        }
+    if (0) {
+    	;
     }
     else {
         *nIn = 0;
@@ -296,39 +286,6 @@ asynStatus acq164AsynPortDriver::readEnum(asynUser *pasynUser, char *strings[], 
     return asynSuccess;
 }
 
-void acq164AsynPortDriver::setVertGain()
-{
-    epicsInt32 igain, i;
-    double gain;
-
-    getIntegerParam(P_VertGainSelect, &igain);
-    gain = igain;
-    setDoubleParam(P_VertGain, gain);
-    for (i=0; i<NUM_VERT_SELECTIONS; i++) {
-        epicsSnprintf(voltsPerDivStrings_[i], MAX_ENUM_STRING_SIZE, "%.2f", allVoltsPerDivSelections[i] / gain);
-        // The values are in mV
-        voltsPerDivValues_[i] = (int)(allVoltsPerDivSelections[i] / gain * 1000. + 0.5);
-    }
-    doCallbacksEnum(voltsPerDivStrings_, voltsPerDivValues_, voltsPerDivSeverities_, NUM_VERT_SELECTIONS, P_VoltsPerDivSelect, 0);
-}
-
-void acq164AsynPortDriver::setVoltsPerDiv()
-{
-    epicsInt32 mVPerDiv;
-
-    // Integer volts are in mV
-    getIntegerParam(P_VoltsPerDivSelect, &mVPerDiv);
-    setDoubleParam(P_VoltsPerDiv, mVPerDiv / 1000.);
-}
-
-void acq164AsynPortDriver::setTimePerDiv()
-{
-    epicsInt32 microSecPerDiv;
-
-    // Integer times are in microseconds
-    getIntegerParam(P_TimePerDivSelect, &microSecPerDiv);
-    setDoubleParam(P_TimePerDiv, microSecPerDiv / 1000000.);
-}
 
 
 //#include "local.h"
@@ -425,89 +382,12 @@ void Acq164Device::task(void)
 */
 	dataStreamer->streamData();
 }
-/** Simulation task that runs as a separate thread.  When the P_Run parameter is set to 1
-  * to rub the simulation it computes a 1 kHz sine wave with 1V amplitude and user-controllable
-  * noise, and displays it on
-  * a simulated scope.  It computes waveforms for the X (time) and Y (volt) axes, and computes
-  * statistics about the waveform. */
-void SimDevice::task(void)
-{
-    /* This thread computes the waveform and does callbacks with it */
 
-    double timePerDiv, voltsPerDiv, voltOffset, triggerDelay, noiseAmplitude;
-    double updateTime, minValue, maxValue, meanValue;
-    double time, timeStep;
-    double noise, yScale;
-    epicsInt32 run, i, maxPoints;
-    double pi=4.0*atan(1.0);
-
-    lock();
-    /* Loop forever */
-    while (1) {
-        getDoubleParam(P_UpdateTime, &updateTime);
-        getIntegerParam(P_Run, &run);
-        // Release the lock while we wait for a command to start or wait for updateTime
-        unlock();
-        if (run) epicsEventWaitWithTimeout(eventId_, updateTime);
-        else     (void) epicsEventWait(eventId_);
-        // Take the lock again
-        lock();
-        /* run could have changed while we were waiting */
-        getIntegerParam(P_Run, &run);
-        if (!run) continue;
-        getIntegerParam(P_MaxPoints,        &maxPoints);
-        getDoubleParam (P_TimePerDiv,       &timePerDiv);
-        getDoubleParam (P_VoltsPerDiv,      &voltsPerDiv);
-        getDoubleParam (P_VoltOffset,       &voltOffset);
-        getDoubleParam (P_TriggerDelay,     &triggerDelay);
-        getDoubleParam (P_NoiseAmplitude,   &noiseAmplitude);
-        time = triggerDelay;
-        timeStep = timePerDiv * NUM_DIVISIONS / maxPoints;
-        minValue = 1e6;
-        maxValue = -1e6;
-        meanValue = 0.;
-
-
-        yScale = 1.0 / voltsPerDiv;
-        for (i=0; i<maxPoints; i++) {
-
-        	double ft = sin(time*FREQUENCY*2*pi);
-        	for (int c=0; c<nchan; c++){
-        		int ix = c*maxPoints + i;
-
-        		noise = noiseAmplitude * (rand()/(double)RAND_MAX - 0.5);
-        		pData_[ix] = c+ AMPLITUDE *ft  + noise;
-        		/* Compute statistics before doing the yOffset and yScale */
-        		if (pData_[ix] < minValue) minValue = pData_[ix];
-        		if (pData_[ix] > maxValue) maxValue = pData_[ix];
-        		if (c==0) meanValue += pData_[ix];
-        		pData_[ix] = NUM_DIVISIONS/2 + yScale * (voltOffset + pData_[ix]);
-        	}
-            time += timeStep;
-        }
-        updateTimeStamp();
-        meanValue = meanValue/maxPoints;
-        setDoubleParam(P_MinValue, minValue);
-        setDoubleParam(P_MaxValue, maxValue);
-        setDoubleParam(P_MeanValue, meanValue);
-
-        callParamCallbacks();
-        for (int c=0; c<nchan; c++){
-        	doCallbacksFloat64Array(pData_+c*maxPoints, maxPoints, P_Waveform, c);
-        }
-    }
-}
 
 int acq164AsynPortDriver::factory(const char *portName, int maxPoints, int nchan)
 {
-	   if (::getenv("SIM") != 0 && atoi(::getenv("SIM")) != 0){
-	    	new SimDevice(portName, maxPoints, nchan);
-	    /* else ACQ400? */
-	   }else{
-	    	new Acq164Device(portName, maxPoints, nchan);
-	   }
-
-	    return(asynSuccess);
+	new Acq164Device(portName, maxPoints, nchan);
+	return(asynSuccess);
 }
 
 /* Configuration routine.  Called directly, or from the iocsh function below */

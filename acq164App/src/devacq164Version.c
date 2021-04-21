@@ -33,6 +33,6 @@ static long read_string(lsiRecord *prec)
 }
 
 static lsidset devacq164Version = {
-    5, NULL, NULL, NULL, NULL, read_string
+    { 5, NULL, NULL, NULL, NULL }, read_string
 };
 epicsExportAddress(dset,devacq164Version);

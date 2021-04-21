@@ -1,3 +1,28 @@
+/* ------------------------------------------------------------------------- */
+/* acq164asynPortDriver.h
+ * Project: ACQ420_FMC
+ * Created: Thu Dec 31 15:16:04 2020                      / User: pgm
+ * ------------------------------------------------------------------------- *
+ *   Copyright (C) 2020/2021 Peter Milne, D-TACQ Solutions Ltd         *
+ *                      <peter dot milne at D hyphen TACQ dot com>           *
+ *                                                                           *
+ *  This program is free software; you can redistribute it and/or modify     *
+ *  it under the terms of Version 2 of the GNU General Public License        *
+ *  as published by the Free Software Foundation;                            *
+ *                                                                           *
+ *  This program is distributed in the hope that it will be useful,          *
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of           *
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            *
+ *  GNU General Public License for more details.                             *
+ *                                                                           *
+ *  You should have received a copy of the GNU General Public License        *
+ *  along with this program; if not, write to the Free Software              *
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.                *
+ *
+ * TODO
+ * TODO
+\* ------------------------------------------------------------------------- */
+
 /*
  * testAsynPortDriver.h
  *
@@ -23,17 +48,10 @@ int acq200_debug;
  * They are used by asyn clients, including standard asyn device support */
 #define P_RunString                "SCOPE_RUN"                  /* asynInt32,    r/w */
 #define P_MaxPointsString          "SCOPE_MAX_POINTS"           /* asynInt32,    r/o */
-#define P_TimePerDivString         "SCOPE_TIME_PER_DIV"         /* asynFloat64,  r/w */
-#define P_TimePerDivSelectString   "SCOPE_TIME_PER_DIV_SELECT"  /* asynInt32,    r/w */
-#define P_VertGainString           "SCOPE_VERT_GAIN"            /* asynFloat64,  r/w */
-#define P_VertGainSelectString     "SCOPE_VERT_GAIN_SELECT"     /* asynInt32,    r/w */
-#define P_VoltsPerDivString        "SCOPE_VOLTS_PER_DIV"        /* asynFloat64,  r/w */
-#define P_VoltsPerDivSelectString  "SCOPE_VOLTS_PER_DIV_SELECT" /* asynInt32,    r/w */
-#define P_VoltOffsetString         "SCOPE_VOLT_OFFSET"          /* asynFloat64,  r/w */
-#define P_TriggerDelayString       "SCOPE_TRIGGER_DELAY"        /* asynFloat64,  r/w */
 #define P_NoiseAmplitudeString     "SCOPE_NOISE_AMPLITUDE"      /* asynFloat64,  r/w */
 #define P_UpdateTimeString         "SCOPE_UPDATE_TIME"          /* asynFloat64,  r/w */
 #define P_WaveformString           "SCOPE_WAVEFORM"             /* asynFloat64Array,  r/o */
+#define P_AIString           	   "SCOPE_SCALAR"               /* asynFloat64,  r/o */
 #define P_TimeBaseString           "SCOPE_TIME_BASE"            /* asynFloat64Array,  r/o */
 #define P_MinValueString           "SCOPE_MIN_VALUE"            /* asynFloat64,  r/o */
 #define P_MaxValueString           "SCOPE_MAX_VALUE"            /* asynFloat64,  r/o */
@@ -65,14 +83,7 @@ protected:
     /** Values used for pasynUser->reason, and indexes into the parameter library. */
     int P_Run;
     int P_MaxPoints;
-    int P_TimePerDiv;
-    int P_TimePerDivSelect;
-    int P_VertGain;
-    int P_VertGainSelect;
-    int P_VoltsPerDiv;
-    int P_VoltsPerDivSelect;
-    int P_VoltOffset;
-    int P_TriggerDelay;
+
     int P_NoiseAmplitude;
     int P_UpdateTime;
     int P_Waveform;
@@ -84,13 +95,6 @@ protected:
     /* Our data */
     epicsEventId eventId_;
     epicsFloat64 *pTimeBase_;
-    // Actual volts per division are these values divided by vertical gain
-    char *voltsPerDivStrings_[NUM_VERT_SELECTIONS];
-    int voltsPerDivValues_[NUM_VERT_SELECTIONS];
-    int voltsPerDivSeverities_[NUM_VERT_SELECTIONS];
-    void setVertGain();
-    void setVoltsPerDiv();
-    void setTimePerDiv();
 
     int nchan;
     epicsFloat64 *pData_;

@@ -1,5 +1,2 @@
 epicsEnvSet("IOC","iocacq164")
-epicsEnvSet("TOP","/home/pgm/PROJECTS/ACQ164/acq164ioc")
-#epicsEnvSet("TOP","/home/peter/PROJECTS/ACQ164/acq164ioc")
-epicsEnvSet("UUT","acq164_080")
-epicsEnvSet("SIZE","1024")
+epicsEnvSet("TOP","/home/pgm/PROJECTS/ACQ164.new/acq164ioc")
