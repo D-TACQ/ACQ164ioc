@@ -312,6 +312,7 @@ class Acq164Device: public acq164AsynPortDriver, FrameHandler {
 	double* eoff;
 
 	void compute_cal(Acq2xx& card);
+	void setup(Acq2xx& card);
 public:
 	Acq164Device(const char *portName, int maxArraySize, int nchan) :
 		acq164AsynPortDriver(portName, maxArraySize, nchan),
@@ -320,6 +321,10 @@ public:
 		const char* key = ::getenv("ACQ164DEVICE_VERBOSE");
 		if (key){
 			verbose = ::strtoul(key, 0, 0);
+		}
+		key = ::getenv("ACQ200_DEBUG");
+		if (key){
+			acq200_debug = ::strtoul(key, 0, 0);
 		}
 	}
 	virtual void task();
@@ -357,6 +362,26 @@ void Acq164Device::compute_cal(Acq2xx& card)
 	}
 
 	delete[] ranges;
+}
+
+void Acq164Device::setup(Acq2xx& card)
+{
+	enum STATE state;
+	if (card.getState(state) != STATUS_OK){
+		fprintf(stderr, "ERROR: failed to get state\n");
+		exit(1);
+	}
+	if (state != ST_STOP){
+		fprintf(stderr, "card state:%d let it run, or abort if you want it to be reconfigured\n", state);
+		return;
+	}
+
+	char response[80];
+
+	card.getTransport()->acq2sh("set.dtacq channel_mask 1", response, 80);
+	card.getTransport()->acq2sh("set.acq164.role MASTER 20", response, 80);
+	card.getTransport()->acqcmd("setMode SOFT_CONTINUOUS 1", response, 80);
+	card.getTransport()->acqcmd("setArm", response, 80);
 }
 
 void Acq164Device::onFrame(
@@ -420,6 +445,7 @@ void Acq164Device::task(void)
 	DataStreamer* dataStreamer = DataStreamer::create(
 				card, AcqType::getAcqType(card));
 	compute_cal(card);
+	setup(card);
 	dataStreamer->addFrameHandler(this);
 /*
 	dataStreamer->addFrameHandler(
